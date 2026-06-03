@@ -47,7 +47,7 @@ export default function Wizard() {
       const res = await fetch('/api/analyse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, industry, customIndustry: customIndustry.trim() || undefined, answers }),
+        body: JSON.stringify({ url, industry, customIndustry: customIndustry.trim() || undefined, answers, name, email }),
       })
 
       const data = await res.json()

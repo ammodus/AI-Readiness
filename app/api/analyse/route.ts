@@ -6,6 +6,7 @@ import { calcInfraScore, calcProcessScore, calcVolumeScore, calcOverallScore, ge
 import { isValidIndustry, validateAnswers, isPlausibleUrl } from '@/lib/validation'
 import { rateLimit, clientIp } from '@/lib/rateLimit'
 import { signResult } from '@/lib/signing'
+import { logLeadToNotion } from '@/lib/notion'
 import type {
   DiagnosticAnswers, Industry, AnalysisResult, EnrichmentSummary,
   InfrastructureFindings, SubScores, ScoreExplanation,
@@ -167,6 +168,8 @@ export async function POST(req: NextRequest) {
     industry?: string
     customIndustry?: string
     answers?: Partial<DiagnosticAnswers>
+    name?: string
+    email?: string
   }
 
   // Rate limit: each call triggers external fetches + an LLM call.
@@ -184,7 +187,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { url, industry, customIndustry, answers } = body
+  const { url, industry, customIndustry, answers, name, email } = body
 
   if (!isPlausibleUrl(url)) {
     return NextResponse.json({ error: 'Enter a valid website URL' }, { status: 400 })
@@ -246,6 +249,11 @@ export async function POST(req: NextRequest) {
   // Sign the result so /api/send-report can verify it was produced here and
   // not forged by the client.
   const signature = signResult(result)
+
+  // Log to Notion CRM as soon as analysis completes — fire and forget
+  if (name && email) {
+    logLeadToNotion(name, email, result, customIndustry).catch(() => {})
+  }
 
   return NextResponse.json({ result, signature })
 }
