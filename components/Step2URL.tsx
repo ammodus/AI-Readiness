@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 interface Props {
   url: string
@@ -16,6 +17,7 @@ interface Props {
 export default function Step2URL({ url, name, email, onUrlChange, onNameChange, onEmailChange, onNext, onBack }: Props) {
   const [urlError, setUrlError] = useState('')
   const [emailError, setEmailError] = useState('')
+  const [consent, setConsent] = useState(false)
 
   function normalise(raw: string): string {
     return raw.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '')
@@ -53,7 +55,7 @@ export default function Step2URL({ url, name, email, onUrlChange, onNameChange, 
     onNext()
   }
 
-  const canProceed = url.trim() && name.trim() && email.trim() && !urlError && !emailError
+  const canProceed = url.trim() && name.trim() && email.trim() && !urlError && !emailError && consent
 
   return (
     <div className="animate-fade-up">
@@ -108,6 +110,22 @@ export default function Step2URL({ url, name, email, onUrlChange, onNameChange, 
           {urlError && <p className="mt-1.5 text-sm text-red-600">{urlError}</p>}
         </div>
       </div>
+
+      <label className="flex items-start gap-3 mb-6 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={e => setConsent(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-ink cursor-pointer"
+        />
+        <span className="text-sm text-muted leading-relaxed">
+          I agree to my data being used to generate and send this report, as described in the{' '}
+          <Link href="/privacy" target="_blank" className="underline hover:no-underline text-ink">
+            Privacy Policy
+          </Link>
+          .
+        </span>
+      </label>
 
       <div className="flex gap-3">
         <button
