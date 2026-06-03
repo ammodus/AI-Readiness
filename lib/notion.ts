@@ -10,14 +10,10 @@
 
 import { Client } from '@notionhq/client'
 import type { AnalysisResult } from './types'
-import { INDUSTRY_LABELS } from './benchmarks'
 
-// ─── Maps ────────────────────────────────────────────────────────────────────
-
-/** Convert internal industry key → Notion select option label */
 const INDUSTRY_SELECT: Record<string, string> = {
   dental:       'Dental',
-  physio:       'Physio',
+  physio:       'Physiotherapy',
   accountancy:  'Accountancy',
   legal:        'Legal',
   recruitment:  'Recruitment',
@@ -25,7 +21,6 @@ const INDUSTRY_SELECT: Record<string, string> = {
   other:        'Other',
 }
 
-/** Convert internal band key → Notion select option label */
 const BAND_SELECT: Record<string, string> = {
   foundations:   'Foundations first',
   getting_there: 'Getting there',
@@ -33,7 +28,7 @@ const BAND_SELECT: Record<string, string> = {
   primed:        'Primed',
 }
 
-// ─── Main export ─────────────────────────────────────────────────────────────
+const client = new Client({ auth: process.env.NOTION_API_KEY })
 
 export async function logLeadToNotion(
   name: string,
@@ -41,12 +36,12 @@ export async function logLeadToNotion(
   result: AnalysisResult,
   customIndustry?: string,
 ): Promise<void> {
-  const apiKey    = process.env.NOTION_API_KEY
   const databaseId = process.env.NOTION_DATABASE_ID
-  console.log('Notion env check — key present:', !!apiKey, '| db present:', !!databaseId)
-  if (!apiKey || !databaseId) return
+  if (!process.env.NOTION_API_KEY || !databaseId) return
 
-  const client = new Client({ auth: apiKey })
+  const trimmedName = name.trim().slice(0, 200)
+  const trimmedEmail = email.trim().slice(0, 200)
+  if (!trimmedName || !trimmedEmail) return
 
   const industryLabel = customIndustry?.trim()
     || INDUSTRY_SELECT[result.industry]
@@ -54,16 +49,17 @@ export async function logLeadToNotion(
 
   const bandLabel = BAND_SELECT[result.band] || 'Foundations first'
 
+  const notes = (result.findings.generalObservation ?? '').slice(0, 2000)
+
   try {
     await client.pages.create({
       parent: { database_id: databaseId },
       properties: {
-        // Title (Name)
         Name: {
-          title: [{ text: { content: name } }],
+          title: [{ text: { content: trimmedName } }],
         },
         Email: {
-          email,
+          email: trimmedEmail,
         },
         Website: {
           url: result.url,
@@ -90,14 +86,11 @@ export async function logLeadToNotion(
           select: { name: 'New' },
         },
         Notes: {
-          rich_text: result.findings.generalObservation
-            ? [{ text: { content: result.findings.generalObservation } }]
-            : [],
+          rich_text: notes ? [{ text: { content: notes } }] : [],
         },
       },
     })
   } catch (err) {
-    // Never surface Notion errors to the user — log only
     console.error('Notion CRM log failed:', (err as Error).message)
   }
 }

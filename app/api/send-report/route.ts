@@ -38,7 +38,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await sendReport(email, name, result, customIndustry)
+    const [emailResult] = await Promise.allSettled([
+      sendReport(email, name, result, customIndustry),
+    ])
+
+    if (emailResult.status === 'rejected') throw emailResult.reason
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('send-report error:', err)
