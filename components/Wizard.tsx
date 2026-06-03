@@ -18,6 +18,7 @@ export default function Wizard() {
   const [url, setUrl] = useState('')
   const [answers, setAnswers] = useState<Partial<DiagnosticAnswers>>({})
   const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [signature, setSignature] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -34,6 +35,7 @@ export default function Wizard() {
     setUrl('')
     setAnswers({})
     setResult(null)
+    setSignature('')
     setError('')
   }
 
@@ -52,6 +54,7 @@ export default function Wizard() {
       if (!res.ok) throw new Error(data.error || 'Analysis failed. Please try again.')
 
       setResult(data.result)
+      setSignature(data.signature ?? '')
       setStep(4)
     } catch (err) {
       setError((err as Error).message)
@@ -130,6 +133,7 @@ export default function Wizard() {
       {step === 4 && result && (
         <Step4Results
           result={result}
+          signature={signature}
           name={name}
           email={email}
           customIndustry={customIndustry}

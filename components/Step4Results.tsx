@@ -7,6 +7,7 @@ import { BAND_META, BENCHMARKS, INDUSTRY_LABELS, GAP_COPY, getLowestScoringSigna
 
 interface Props {
   result: AnalysisResult
+  signature: string
   name: string
   email: string
   customIndustry?: string
@@ -82,7 +83,7 @@ function RecommendationCard({ rec, index }: { rec: Recommendation; index: number
   )
 }
 
-export default function Step4Results({ result, name, email, customIndustry, onReset }: Props) {
+export default function Step4Results({ result, signature, name, email, customIndustry, onReset }: Props) {
   const [emailSent, setEmailSent] = useState(false)
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailError, setEmailError] = useState('')
@@ -108,7 +109,7 @@ export default function Step4Results({ result, name, email, customIndustry, onRe
       const res = await fetch('/api/send-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, result, customIndustry }),
+        body: JSON.stringify({ name, email, result, signature, customIndustry }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to send report')
